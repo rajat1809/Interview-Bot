@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Any
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
@@ -13,3 +13,4 @@ class InterviewState(TypedDict):
     req_code_input: bool
     feedback_report: Optional[dict]
     detailed_evaluation: Optional[dict]
+    retriever: Optional[Any]  # FAISS retriever for job description
