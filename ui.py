@@ -42,30 +42,53 @@ if "audio_counter" not in st.session_state:
     st.session_state.audio_counter = 0
 if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
+if "resume_vectorstore" not in st.session_state:
+    st.session_state.resume_vectorstore = None
 if "code_editor_key" not in st.session_state:
     st.session_state.code_editor_key = 0
 if "last_pdf_name" not in st.session_state:
     st.session_state.last_pdf_name = None
+if "last_resume_name" not in st.session_state:
+    st.session_state.last_resume_name = None
 
 # --- Sidebar configuration ---
 with st.sidebar:
     st.header("Interview Config")
     st.session_state.job_description = st.text_area("Job Description", st.session_state.job_description, height=100)
     st.session_state.candidate_details = st.text_area("Candidate Details", st.session_state.candidate_details, height=80)
+    
+    # JD PDF uploader
     uploaded_pdf = st.file_uploader("Upload JD PDF", type=["pdf"], key="pdf_uploader")
     if uploaded_pdf:
         if st.session_state.last_pdf_name != uploaded_pdf.name:
-            with st.spinner("Processing PDF..."):
+            with st.spinner("Processing JD PDF..."):
                 try:
                     vectorstore = process_pdf(uploaded_pdf)
                     st.session_state.vectorstore = vectorstore
                     st.session_state.last_pdf_name = uploaded_pdf.name
-                    st.success(f"✅ Processed: {uploaded_pdf.name}")
+                    st.success(f"✅ Processed JD: {uploaded_pdf.name}")
                 except Exception as e:
-                    st.error(f"Error processing PDF: {e}")
+                    st.error(f"Error processing JD PDF: {e}")
                     st.session_state.vectorstore = None
         else:
-            st.info(f"✅ Using cached PDF: {uploaded_pdf.name}")
+            st.info(f"✅ Using cached JD: {uploaded_pdf.name}")
+    
+    # Resume PDF uploader
+    uploaded_resume = st.file_uploader("Upload Resume PDF", type=["pdf"], key="resume_uploader")
+    if uploaded_resume:
+        if st.session_state.last_resume_name != uploaded_resume.name:
+            with st.spinner("Processing Resume PDF..."):
+                try:
+                    resume_vectorstore = process_pdf(uploaded_resume)
+                    st.session_state.resume_vectorstore = resume_vectorstore
+                    st.session_state.last_resume_name = uploaded_resume.name
+                    st.success(f"✅ Processed Resume: {uploaded_resume.name}")
+                except Exception as e:
+                    st.error(f"Error processing Resume PDF: {e}")
+                    st.session_state.resume_vectorstore = None
+        else:
+            st.info(f"✅ Using cached Resume: {uploaded_resume.name}")
+    
     if st.button("Start / Reset Interview"):
         st.session_state.messages = []
         st.session_state.started = False
@@ -77,7 +100,9 @@ with st.sidebar:
         st.session_state.last_audio_processed = None
         st.session_state.audio_counter = 0
         st.session_state.vectorstore = None
+        st.session_state.resume_vectorstore = None
         st.session_state.last_pdf_name = None
+        st.session_state.last_resume_name = None
         st.rerun()
 
 # --- Helper functions ---
@@ -136,6 +161,7 @@ def run_turn(user_text, code_snippet=None):
             "num_questions_asked": st.session_state.num_questions_asked,
             "interview_status": st.session_state.interview_status,
             "retriever": st.session_state.vectorstore,
+            "resume_retriever": st.session_state.resume_vectorstore,
         }
         st.session_state.started = True
         events = app_graph.stream(initial_state, config=config)
@@ -155,6 +181,7 @@ def run_turn(user_text, code_snippet=None):
             "num_questions_asked": st.session_state.num_questions_asked,
             "interview_status": st.session_state.interview_status,
             "retriever": st.session_state.vectorstore,
+            "resume_retriever": st.session_state.resume_vectorstore,
         }, config=config)
     process_response(events)
     st.rerun()
@@ -205,7 +232,9 @@ if st.session_state.detailed_evaluation:
         st.session_state.last_audio_processed = None
         st.session_state.audio_counter = 0
         st.session_state.vectorstore = None
+        st.session_state.resume_vectorstore = None
         st.session_state.last_pdf_name = None
+        st.session_state.last_resume_name = None
         st.rerun()
 else:
     # Chat history

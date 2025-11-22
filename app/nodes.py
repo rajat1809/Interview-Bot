@@ -28,22 +28,29 @@ def main_agent_router(state: InterviewState):
 
 def interviewer_agent(state: InterviewState):
     """
-    Interviewer agent that can use RAG tool to query job description.
-    Uses function calling to decide when to retrieve context.
-    Falls back to simple LLM if no retriever available.
+    Interviewer agent that can use both JD and resume RAG tools.
+    Uses function calling to decide when to retrieve context from either source.
+    Falls back to simple LLM if no retrievers available.
     """
     if state.get("num_questions_asked", 0) >= 5:
         return {"interview_status": "finished"}
 
-    # Check if we have a retriever (PDF uploaded)
-    retriever = state.get("retriever")
+    # Check for retrievers
+    jd_retriever = state.get("retriever")
+    resume_retriever = state.get("resume_retriever")
     
-    if retriever:
+    # Build list of available tools
+    tools = []
+    if jd_retriever:
+        from app.rag_utils import create_retrieval_tool
+        tools.append(create_retrieval_tool(jd_retriever))
+    if resume_retriever:
+        from app.rag_utils import create_resume_retrieval_tool
+        tools.append(create_resume_retrieval_tool(resume_retriever))
+    
+    if tools:
         # Use LLM with tool calling for RAG
-        tool = create_retrieval_tool(retriever)
-        
-        # Bind tool to LLM
-        llm_with_tools = llm.bind_tools([tool])
+        llm_with_tools = llm.bind_tools(tools)
         
         # Create system prompt
         system_prompt = INTERVIEWER_REACT_PROMPT.format(
@@ -54,21 +61,24 @@ def interviewer_agent(state: InterviewState):
         messages = [SystemMessage(content=system_prompt)] + state['messages']
         
         try:
-            # First call - LLM decides if it needs to use the tool
+            # First call - LLM decides if it needs to use tools
             response = llm_with_tools.invoke(messages)
             
             # Check if LLM wants to use tools
             if response.tool_calls:
-                # Execute tool calls
+                # Execute tool calls and collect context
                 for tool_call in response.tool_calls:
-                    if tool_call['name'] == 'job_description_retrieval':
-                        # Get the query argument
+                    tool_name = tool_call['name']
+                    # Find the matching tool
+                    matching_tool = next((t for t in tools if t.name == tool_name), None)
+                    if matching_tool:
                         query = tool_call['args'].get('query', '')
-                        # Get context from RAG
-                        context = tool.func(query)
-                        # Add context to messages and ask again
+                        context = matching_tool.func(query)
+                        # Add context to messages
                         messages.append(AIMessage(content=f"Retrieved context: {context}"))
-                        response = llm.invoke(messages)
+                
+                # Generate final response with context
+                response = llm.invoke(messages)
             
             response_content = response.content
         except Exception as e:
@@ -83,7 +93,7 @@ def interviewer_agent(state: InterviewState):
             response = llm.invoke(messages)
             response_content = response.content
     else:
-        # No PDF uploaded, use simple LLM
+        # No PDFs uploaded, use simple LLM
         system_prompt = INTERVIEWER_SYSTEM_PROMPT.format(
             role=state['interview_role'],
             jd=state['job_description'],
@@ -107,6 +117,7 @@ def interviewer_agent(state: InterviewState):
         "num_questions_asked": state["num_questions_asked"] + 1,
         "req_code_input": ask_for_code
     }
+
 
 def feedback_agent(state: InterviewState):
     structured_llm = llm.with_structured_output(FeedbackScore)

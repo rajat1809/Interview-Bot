@@ -37,3 +37,4 @@ Thumbs.db
 test_*.py
 debug_*.py
 check_*.py
+validate_*.py

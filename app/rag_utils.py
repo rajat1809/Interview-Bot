@@ -90,6 +90,46 @@ def create_retrieval_tool(vectorstore: FAISS) -> Tool:
     return tool
 
 
+def create_resume_retrieval_tool(vectorstore: FAISS) -> Tool:
+    """
+    Create a LangChain tool for retrieving candidate resume/experience context
+    
+    Args:
+        vectorstore: FAISS vector store containing candidate resume
+        
+    Returns:
+        LangChain Tool for resume retrieval
+    """
+    retriever = vectorstore.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 3}
+    )
+    
+    def retrieve_resume_context(query: str) -> str:
+        """Retrieve relevant context from the candidate's resume"""
+        docs = retriever.invoke(query)
+        if not docs:
+            return "No relevant information found in candidate resume."
+        
+        # Combine retrieved documents
+        context = "\n\n".join([doc.page_content for doc in docs])
+        return f"Relevant Candidate Resume Context:\n{context}"
+    
+    tool = Tool(
+        name="candidate_resume_retrieval",
+        description=(
+            "Retrieves relevant information from the candidate's resume PDF. "
+            "Use this when you need details about their projects, work experience, "
+            "internships, skills, education, or any other background information. "
+            "Input should be a specific question about their experience or qualifications."
+        ),
+        func=retrieve_resume_context
+    )
+    
+    return tool
+
+
+
 def create_simple_vectorstore(text: str) -> FAISS:
     """
     Create a simple vector store from plain text (fallback if no PDF)

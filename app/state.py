@@ -13,4 +13,5 @@ class InterviewState(TypedDict):
     req_code_input: bool
     feedback_report: Optional[dict]
     detailed_evaluation: Optional[dict]
-    retriever: Optional[Any]  # FAISS retriever for job description
+    retriever: Optional[Any]  # FAISS vectorstore for job description
+    resume_retriever: Optional[Any]  # FAISS vectorstore for candidate resume
