@@ -1,13 +1,16 @@
 from langgraph.graph import StateGraph, END
 from app.state import InterviewState
 from app.nodes import main_agent_router, interviewer_agent, evaluation_agent
+import streamlit as st
 
 def should_continue(state: InterviewState):
     if state["interview_status"] == "finished":
         return "evaluation_agent"
     return END 
 
+@st.cache_resource
 def build_graph():
+    """Build and compile the interview graph. Cached to avoid recompilation on every rerun."""
     workflow = StateGraph(InterviewState)
     workflow.add_node("main_agent", main_agent_router)
     workflow.add_node("interviewer_agent", interviewer_agent)

@@ -10,21 +10,25 @@ from langchain_core.tools import Tool
 from langchain_core.documents import Document
 import tempfile
 import os
+import streamlit as st
 
 
-def process_pdf(pdf_file) -> FAISS:
+@st.cache_resource(show_spinner=False)
+def process_pdf(_pdf_file) -> FAISS:
     """
-    Process uploaded PDF and create FAISS vector store
+    Process uploaded PDF and create FAISS vector store.
+    Cached to avoid reprocessing same PDFs.
+    Note: Parameter prefixed with _ to exclude from Streamlit's hash.
     
     Args:
-        pdf_file: Streamlit UploadedFile object
+        _pdf_file: Streamlit UploadedFile object
         
     Returns:
         FAISS vector store
     """
     # Save uploaded file to temporary location
     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-        tmp_file.write(pdf_file.getvalue())
+        tmp_file.write(_pdf_file.getvalue())
         tmp_path = tmp_file.name
     
     try:
@@ -49,6 +53,7 @@ def process_pdf(pdf_file) -> FAISS:
         # Clean up temp file
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
 
 
 def create_retrieval_tool(vectorstore: FAISS) -> Tool:

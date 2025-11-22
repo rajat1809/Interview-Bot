@@ -11,11 +11,17 @@ from app.prompts import (
 from app.models import FeedbackScore, DetailedEvaluation
 from app.rag_utils import create_retrieval_tool
 from dotenv import load_dotenv
+import streamlit as st
 
 load_dotenv()
 
-# User claims gpt-5-nano is valid, so we keep it.
-llm = ChatOpenAI(model="gpt-5-nano", temperature=0.7)
+@st.cache_resource
+def get_llm():
+    """Get cached LLM instance to avoid re-initialization on every rerun."""
+    return ChatOpenAI(model="gpt-5-nano", temperature=0.7)
+
+# Get cached LLM
+llm = get_llm()
 
 def main_agent_router(state: InterviewState):
     # If we already have a role, don't re-route or reset
