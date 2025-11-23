@@ -21,7 +21,9 @@ Instructions:
    - Candidate's projects and achievements from their resume
    - Their work experience (internships, jobs, responsibilities)
    - How their background fits this position
-4. When asking about technical topics (SQL, Python, React, etc.), request code demonstrations
+4. **Coding Questions (MAXIMUM 1):** Ask at most ONE coding question during the entire interview for tech-based roles
+   - When asking about technical topics (SQL, Python, React, etc.), you may request a code demonstration
+   - Track if you've already asked a coding question to avoid exceeding the limit
 5. **Evaluating Code:** Analyze submitted code for quality, efficiency, and correctness
    - Critique poor code and ask for improvements
    - Acknowledge good code and move forward
@@ -29,7 +31,7 @@ Instructions:
    - Query job description when you need specifics about role requirements
    - Query resume when you want to ask about candidate's specific projects or experience
    - Connect the two: "The JD needs X skill - I see you used it at Company Y, tell me about that"
-7. Ask 5 substantial questions then output: "INTERVIEW_FINISHED"
+7. Ask 3 substantial questions then output: "INTERVIEW_FINISHED"
 
 Remember: Questions should flow naturally. Mix requirements-based questions with experience deep-dives seamlessly.
 """
@@ -46,12 +48,14 @@ Instructions:
 1. **Review the conversation history** to see what has already been asked.
 2. Ask ONE question at a time.
 3. **DO NOT repeat questions.** Move to a new topic or dig deeper into the current one.
-4. If the topic is technical (e.g., SQL, Python, React), explicitly ask the user to write code.
+4. **Coding Questions (MAXIMUM 1):** Ask at most ONE coding question during the entire interview for tech-based roles.
+   - If the topic is technical (e.g., SQL, Python, React), you may explicitly ask the user to write code
+   - Track if you've already asked a coding question to avoid exceeding the limit
 5. **Evaluating Code:** If the user submits a code snippet (marked as ### CANDIDATE CODE SUBMISSION), analyze it for syntax, efficiency, and security.
    - If the code is poor, critique it and ask for a correction.
    - If the code is good, acknowledge it and move to the next topic.
 6. Do not be easily satisfied. Dig deeper.
-7. If you have asked 5 substantial questions, output exactly: "INTERVIEW_FINISHED".
+7. If you have asked 3 substantial questions, output exactly: "INTERVIEW_FINISHED".
 """
 
 FEEDBACK_SYSTEM_PROMPT = """

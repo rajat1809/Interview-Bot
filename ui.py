@@ -134,7 +134,14 @@ def process_response(events):
                         except Exception as e:
                             st.error(f"TTS Error: {e}")
                 elif key == "evaluation_agent":
-                    st.session_state.messages.append({"role": "assistant", "content": "Interview Complete. Generating Detailed Evaluation..."})
+                    thank_you_msg = "Thank you for your time! This concludes our interview. I'll now generate your detailed evaluation report..."
+                    st.session_state.messages.append({"role": "assistant", "content": thank_you_msg})
+                    # TTS for thank you message
+                    try:
+                        resp = client.audio.speech.create(model="tts-1", voice="alloy", input=thank_you_msg)
+                        st.session_state["last_audio"] = resp.content
+                    except Exception as e:
+                        st.error(f"TTS Error: {e}")
                     if "detailed_evaluation" in value:
                         st.session_state.detailed_evaluation = value["detailed_evaluation"]
                         st.session_state.messages.append({"role": "assistant", "content": f"DECISION: {value['detailed_evaluation']['decision']}"})
